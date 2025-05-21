@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Starter Quiz</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .emoji-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .emoji-bg span {
+      position: absolute;
+      font-size: 32px;
+      opacity: 1;
+      user-select: none;
+    }
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem;
+      background-color: rgba(255, 255, 255, 0.9);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .question {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    button.option {
+      display: block;
+      margin: 0.5rem auto;
+      padding: 0.8rem 1rem;
+      width: 80%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fefefe;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.3s;
+    }
+    button.option:hover {
+      background: #e0f7fa;
+    }
+    #result {
+      margin-top: 2rem;
+      font-weight: bold;
+      background: #e3f2fd;
+      padding: 1rem;
+      border-radius: 6px;
+      text-align: center;
+    }
+    #progress {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      color: #555;
+    }
+    #restart {
+      display: none;
+      margin: 2rem auto 0;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #progress-bar-container {
+  width: 100%;
+  background-color: #ddd;
+  border-radius: 10px;
+  height: 10px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+#progress-bar {
+  height: 100%;
+  background-color: #2196f3;
+  width: 0%;
+  transition: width 0.4s ease-in-out;
+}
+
+  </style>
+</head>
+<body>
+  <div class="emoji-bg"></div>
+  <main>
+    <h1>Task Starter Quiz</h1>
+    <div id="progress"></div>
+    <div id="quiz"></div>
+    <div id="result"></div>
+    <button id="restart" onclick="restartQuiz()">Take the quiz again</button>
+    <div id="progress-bar-container">
+        <div id="progress-bar"></div>
+      </div>
+      
+  </main>
+
+  <script>
+    
+    const quizData = [
+      {
+        question: "How many tasks are you facing right now?",
+        options: [
+          { text: "Too many, I don't know where to start", tags: ["overwhelmed"] },
+          { text: "Three or four, but I can't decide the order", tags: ["stuck"] },
+          { text: "Just one or two, but I've been putting them off", tags: ["procrastinate"] },
+          { text: "Nothing urgent, but I feel like I should do something", tags: ["unclear"] },
+        ],
+      },
+      {
+        question: "How's your energy level right now?",
+        options: [
+          { text: "I'm full of energy", tags: ["high energy"] },
+          { text: "I'm okay", tags: ["medium"] },
+          { text: "Feeling a bit tired", tags: ["low energy"] },
+          { text: "Really drained", tags: ["very low energy"] },
+        ],
+      },
+      {
+        question: "What are you most worried about?",
+        options: [
+          { text: "Doing the wrong task and missing something important", tags: ["urgent"] },
+          { text: "Not doing it well enough and getting judged", tags: ["perfectionism"] },
+          { text: "Taking too long and being inefficient", tags: ["procrastinate"] },
+          { text: "Putting it off too long and running out of time", tags: ["anxiety"] },
+        ],
+      },
+      {
+        question: "What’s your current environment like?",
+        options: [
+          { text: "Quiet and good for focus", tags: ["focused"] },
+          { text: "Not bad, a bit noisy", tags: ["medium"] },
+          { text: "Lots of distractions", tags: ["distracted"] },
+          { text: "Very noisy and stressful", tags: ["unfocused"] },
+        ],
+      },
+      {
+        question: "How well do you understand your tasks?",
+        options: [
+          { text: "Very well, I know exactly what to do", tags: ["clear"] },
+          { text: "Rough idea, but some parts are fuzzy", tags: ["medium"] },
+          { text: "Not sure about some parts", tags: ["unclear"] },
+          { text: "Honestly, not really sure what to do", tags: ["unclear"] },
+        ],
+      },
+      {
+        question: "How long do you think you can stay focused right now?",
+        options: [
+          { text: "Over an hour", tags: ["high energy"] },
+          { text: "Around 30 minutes", tags: ["medium"] },
+          { text: "Not sure", tags: ["unsure"] },
+          { text: "Just a few minutes", tags: ["low energy"] },
+        ],
+      },
+      {
+        question: "What usually helps you get started?",
+        options: [
+          { text: "Doing something small and easy first", tags: ["go simple"] },
+          { text: "Tackling the most urgent thing right away", tags: ["go urgent"] },
+          { text: "Writing everything down and organizing it", tags: ["go organize"] },
+          { text: "Honestly, I don't know", tags: ["unsure"] },
+        ],
+      },
+      {
+        question: "How much do you want to avoid your task right now?",
+        options: [
+          { text: "A lot, I really don't want to touch it", tags: ["resistance"] },
+          { text: "A little, I’m just not feeling it", tags: ["resistance"] },
+          { text: "Not really, I'm just dragging it out", tags: ["procrastinate"] },
+          { text: "No strong feelings, just haven’t started yet", tags: ["medium"] },
+        ],
+      },
+    ];
+
+    let currentQuestion = 0;
+    let tagScores = {};
+
+    function showQuestion() {
+      const quiz = document.getElementById("quiz");
+      const progress = document.getElementById("progress");
+      quiz.innerHTML = "";
+      if (currentQuestion >= quizData.length) {
+        showResult();
+        return;
+      }
+      const q = quizData[currentQuestion];
+      progress.textContent = `Question ${currentQuestion + 1} of ${quizData.length}`;
+      const qDiv = document.createElement("div");
+      qDiv.className = "question";
+      const qTitle = document.createElement("h3");
+      qTitle.textContent = q.question;
+      qDiv.appendChild(qTitle);
+      q.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.className = "option";
+        btn.textContent = opt.text;
+        btn.onclick = () => {
+          opt.tags.forEach((tag) => {
+            tagScores[tag] = (tagScores[tag] || 0) + 1;
+          });
+          currentQuestion++;
+          showQuestion();
+        };
+        qDiv.appendChild(btn);
+      });
+      quiz.appendChild(qDiv);
+    }
+
+    function showResult() {
+      const result = document.getElementById("result");
+      const quiz = document.getElementById("quiz");
+      const progress = document.getElementById("progress");
+      const restart = document.getElementById("restart");
+      quiz.innerHTML = "";
+      progress.textContent = "";
+
+      const tagEntries = Object.entries(tagScores);
+      const scores = tagEntries.reduce(
+        (acc, [tag, val]) => {
+          if (tag.includes("simple") || tag.includes("go simple")) acc.simple += val;
+          if (tag.includes("urgent") || tag.includes("go urgent")) acc.urgent += val;
+          if (tag.includes("organize") || tag.includes("go organize")) acc.organize += val;
+          return acc;
+        },
+        { simple: 0, urgent: 0, organize: 0 }
+      );
+
+      let suggestion = "";
+      if (scores.simple >= scores.urgent && scores.simple >= scores.organize) {
+        suggestion = "Try starting with something really easy. Set a 10-minute timer and just begin.";
+      } else if (scores.urgent >= scores.simple && scores.urgent >= scores.organize) {
+        suggestion = "Pick the most urgent or overdue task. Do just one small part of it to get going.";
+      } else {
+        suggestion = "Take 10 minutes to write down your tasks and sort them by priority. Then choose one.";
+      }
+      result.textContent = suggestion;
+      restart.style.display = "block";
+    }
+
+    function restartQuiz() {
+      currentQuestion = 0;
+      tagScores = {};
+      document.getElementById("result").textContent = "";
+      document.getElementById("restart").style.display = "none";
+      showQuestion();
+    }
+    function showQuestion() {
+  const quiz = document.getElementById("quiz");
+  const progressText = document.getElementById("progress");
+  const progressBar = document.getElementById("progress-bar");
+  quiz.innerHTML = "";
+
+  if (currentQuestion >= quizData.length) {
+    showResult();
+    return;
+  }
+
+  
+  progressText.textContent = `Question ${currentQuestion + 1} of ${quizData.length}`;
+  const progressPercent = ((currentQuestion + 1) / quizData.length) * 100;
+  progressBar.style.width = `${progressPercent}%`;
+
+  const q = quizData[currentQuestion];
+  const qDiv = document.createElement("div");
+  qDiv.className = "question";
+  const qTitle = document.createElement("h3");
+  qTitle.textContent = q.question;
+  qDiv.appendChild(qTitle);
+
+  q.options.forEach((opt) => {
+    const btn = document.createElement("button");
+    btn.className = "option";
+    btn.textContent = opt.text;
+    btn.onclick = () => {
+      opt.tags.forEach((tag) => {
+        tagScores[tag] = (tagScores[tag] || 0) + 1;
+      });
+      currentQuestion++;
+      showQuestion();
+    };
+    qDiv.appendChild(btn);
+  });
+
+  quiz.appendChild(qDiv);
+}
+
+    showQuestion();
+
+    
+    const emojiList = ['😰', '📓', '✏️', '🎒', '💻'];
+    const emojiBg = document.querySelector('.emoji-bg');
+    const emojiCount = 70;
+
+    for (let i = 0; i < emojiCount; i++) {
+      const emoji = document.createElement('span');
+      emoji.textContent = emojiList[Math.floor(Math.random() * emojiList.length)];
+      emoji.style.left = Math.random() * 100 + '%';
+      emoji.style.top = Math.random() * 100 + '%';
+      emoji.style.fontSize = 24 + Math.random() * 24 + 'px';
+      emoji.style.opacity = 0.9 + Math.random() * 0.15;
+      emojiBg.appendChild(emoji);
+    }
+  </script>
+</body>
+</html>
